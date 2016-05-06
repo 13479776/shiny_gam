@@ -1,0 +1,2139 @@
+library(lattice)
+?dotchart
+>dotplot
+?dotplot
+lattice.getOption("panel.dotplot")
+panel.dotplot
+library(subsets)
+library(leaps)
+help(package=leaps)
+.91*30 + sum(c(.99, .88, .83, .92)*7.5) + .905*40
+quit('no')
+k <- c(rep(c(2,3,2,3,1), 10), rep(c(,1,1,0,2,3), 10))#
+n <- rep(rep(3, length(k)), 10)
+rep(c(2,3,2,3,1), 10)
+install.packages("SparseM")
+library(car)
+table(Chile$statusquo)
+library(foreign)#
+dat <- read.dta("http://www.quantoid.net/files/935/anes2008_binary.dta")#
+ag <- aggregate(dat$voted, list(dat$age), mean, na.rm=T)#
+names(ag) <- c("age", "prvote")#
+plot(prvote ~ age, data=ag, type="l", ylab="Pr(voted | age)")
+dat$race <- 1 + dat$white + 2*dat$black#
+dat$race <- factor(dat$race, levels=1:3, labels=c("Other", "White", "Black"))#
+mod <- glm(voted ~ age + educ + income + poly(leftright, 2) + #
+    female + race, data=dat, family=binomial(link="logit"))
+e <- residuals(mod, type="pearson")
+hist(e)
+deltaB <- function(obj){#
+    X <- model.matrix(obj)#
+    V <- vcov(obj)#
+    pi_hat <- predict(obj, type="response")#
+    h <- pi_hat*(1-pi_hat)*diag(X %*% V%*% t(X))#
+    return(c(h))#
+}#
+h <- deltaB(mod)
+h
+hist(h)
+leastLikely <- function(obj, n=5){#
+    y <- model.response(model.frame(obj))#
+    pi_hat <- predict(obj, type="response")#
+    M <- model.frame(obj)#
+    M$pi_hat <- pi_hat#
+    M$y <- y#
+    M <- M[order(M$pi_hat), ]#
+    ones <- which(M$y == 1)#
+    zeros <- which(M$y == 0)#
+    in1 <- ones[1:n]#
+    in0 <- rev(zeros)[1:n]#
+    res <- list()#
+    res[["zeros"]] <- M[in0, ]#
+    res[["ones"]] <- M[in1, ]#
+    return(res)#
+}
+leastLikely(mod, 2)
+install.packages("mfx")
+library(mfx)
+??logitmfx
+mfx(mod)
+logitmfx(mod)
+mod
+m1 <- glm(voted ~ female, data=dat, family=binomial)
+logitmfx(m1, data=dat)
+X0 <- X1 <- model.matrix(m1)
+X0[1,]
+X0[,1] <- 0
+X0[,1] <- 1
+X0[,2] <- 0
+X1[,2] <- 1
+p0 <- plogis(X0 %*% coef(m1))
+p1 <- plogis(X1 %*% coef(m1))
+mean(p1-p0)
+sd(p1-p0)
+p1-p0
+lirbary(mirt)
+library(mirt)
+?mirt
+?fscores
+?mirt
+install.packages("Rsolnp")
+library(Rsolnp)
+?solnp
+install.packages("alabama")
+library(alabama)
+?alabama
+install.packages("mirt")
+nItem <- 20#
+r <- 0#
+n <- 500#
+structure <- "asst"#
+data <- "NC"#
+factors = "orthogonal"#
+nSim <- 1#
+verbose<- T
+angles <- switch(structure, #
+    asst = c(15,15), #
+    complex = c(20,45))#
+require(MASS)#
+require(mirt)#
+#
+#### Auxiliary Functions #####
+deg2rad <- function(x)x*pi/180#
+rad2deg <- function(x)180*x/pi#
+#
+indll <- function(obj, data){#
+    fs <- fscores(obj, verbose=F)#
+    rp <- apply(data, 1, paste, collapse="")#
+    est.rp <- apply(obj@Data$tabdata, 1, paste, collapse="")#
+    log(obj@Pl[match(rp, est.rp)])#
+}#
+###############################
+#
+# symbolic representations of models with #
+# uncorrelated factors (orth.mod) and #
+# correlated factors (cor.mod)#
+orth.mod <- paste(#
+    "F1 = 1-", nItem/2, ", ", nItem/2+2, "-", nItem, #
+    "\nF2=2-", nItem, sep="")#
+#
+cor.mod <- paste(orth.mod, "\nCOV=F1*F2", sep="")#
+#
+model <- switch(factors, #
+    orthogonal = orth.mod, #
+    correlated = cor.mod)#
+#
+# convert models to mirt format#
+model <- mirt.model(model)#
+#
+itype <- switch(data, #
+    C = "2PL", #
+    NC = "PC2PL")#
+#
+# make correlation matrix of#
+Sigma <- diag(2)#
+Sigma[1,2] <- Sigma[2,1] <- r
+theta <- mvrnorm(n, c(0,0), Sigma, empirical=T)#
+#
+# draw a1 and a2 from log normal#
+# with mean = 0 and sd=.5#
+aprim <- rlnorm(nItem, 0, .5)#
+#
+# truncate a1 and a2 to be in the range [.4, 2]#
+aprim <- ifelse(aprim < .4, .4, aprim)#
+aprim <- ifelse(aprim > 2, 2, aprim)#
+#
+# convert angle to radians#
+angles <- deg2rad(angles*runif(1,0,1))#
+#
+# get cosine of angle#
+term1 <- cos(angles)#
+#
+# rotate a#
+asec <- rep(NA, nItem)#
+asec[1:(nItem/2)] <- aprim[1:(nItem/2)]*sqrt((1-term1[1]^2)/term1[1])#
+asec[(nItem/2 + 1):nItem] <- aprim[(nItem/2 + 1):nItem]*sqrt((1-term1[2]^2)/term1[2])#
+#
+# put A together so primary and secondary #
+# dimensions are in the right places#
+amat <- cbind(c(aprim[1:(nItem/2)], asec[(nItem/2 + 1):nItem]), c(asec[1:(nItem/2)], aprim[(nItem/2 + 1):nItem]))#
+amat[(nItem/2+1),1] <- amat[1,2] <- 0#
+#
+# draw the difficulty parameter#
+d1 <- rnorm(nItem, 0, 1)#
+if(data == "NC"){#
+    d2 <- rnorm(nItem, 0, 1)#
+}#
+#
+if(data == "C"){#
+    # generate response probabilities#
+    resp <- plogis(cbind(theta, 1)%*% t(cbind(amat, d1)))#
+    # draw random uniform [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+    # Create y=1 if response probability > uniform draw#
+    y1 <- runmat < resp#
+#
+    # draw random uniform [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+    # Create y=T if response probability > uniform draw, F otherwise#
+    y2 <- runmat < resp#
+#
+    # replace logicals with {0,1}#
+    y1 <- apply(y1, 2, as.numeric)#
+    y2 <- apply(y2, 2, as.numeric)#
+#
+}#
+if(data == "NC"){#
+    # generate response probabilities#
+    resp <- plogis(cbind(theta[,1], 1)%*%rbind(amat[,1], d1))*plogis(cbind(theta[,2], 1)%*%rbind(amat[,2], d2))#
+#
+    # draw random uniform on [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+#
+    # Create y=T if response probability > uniform draw, F otherwise#
+    y1 <- runmat < resp#
+#
+    # draw random uniform on [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+#
+    # Create y=T if response probability > uniform draw, F otherwise#
+    y2 <- runmat < resp#
+#
+    # replace logicals with {0,1}#
+    y2 <- apply(y2, 2, as.numeric)#
+    y1 <- apply(y1, 2, as.numeric)#
+}
+verbose
+mod1 <- mirt(y1, model, itemtype=itype, #
+    verbose=verbose)
+mod1 <- mirt(y1, model, itemtype=itype, #
+    verbose=verbose, technical=list(NCYCLES=2500))
+summary(mod1)
+amat
+library(devtools)
+install.github("philchalmers/mirt")
+install_github("philchalmers/mirt")
+library(mirt)
+nItem <- 20#
+r <- 0#
+n <- 500#
+structure <- "asst"#
+data <- "NC"#
+factors = "orthogonal"#
+nSim <- 1#
+verbose<- T
+angles <- switch(structure, #
+    asst = c(15,15), #
+    complex = c(20,45))#
+require(MASS)#
+require(mirt)#
+#
+#### Auxiliary Functions #####
+deg2rad <- function(x)x*pi/180#
+rad2deg <- function(x)180*x/pi#
+#
+indll <- function(obj, data){#
+    fs <- fscores(obj, verbose=F)#
+    rp <- apply(data, 1, paste, collapse="")#
+    est.rp <- apply(obj@Data$tabdata, 1, paste, collapse="")#
+    log(obj@Pl[match(rp, est.rp)])#
+}#
+###############################
+#
+# symbolic representations of models with #
+# uncorrelated factors (orth.mod) and #
+# correlated factors (cor.mod)#
+orth.mod <- paste(#
+    "F1 = 1-", nItem/2, ", ", nItem/2+2, "-", nItem, #
+    "\nF2=2-", nItem, sep="")#
+#
+cor.mod <- paste(orth.mod, "\nCOV=F1*F2", sep="")#
+#
+model <- switch(factors, #
+    orthogonal = orth.mod, #
+    correlated = cor.mod)#
+#
+# convert models to mirt format#
+model <- mirt.model(model)#
+#
+itype <- switch(data, #
+    C = "2PL", #
+    NC = "PC2PL")#
+#
+# make correlation matrix of#
+Sigma <- diag(2)#
+Sigma[1,2] <- Sigma[2,1] <- r#
+res <- NULL#
+# for(j in 1:nSim){#
+# draw factors #
+theta <- mvrnorm(n, c(0,0), Sigma, empirical=T)#
+#
+# draw a1 and a2 from log normal#
+# with mean = 0 and sd=.5#
+aprim <- rlnorm(nItem, 0, .5)#
+#
+# truncate a1 and a2 to be in the range [.4, 2]#
+aprim <- ifelse(aprim < .4, .4, aprim)#
+aprim <- ifelse(aprim > 2, 2, aprim)#
+#
+# convert angle to radians#
+angles <- deg2rad(angles*runif(1,0,1))#
+#
+# get cosine of angle#
+term1 <- cos(angles)#
+#
+# rotate a#
+asec <- rep(NA, nItem)#
+asec[1:(nItem/2)] <- aprim[1:(nItem/2)]*sqrt((1-term1[1]^2)/term1[1])#
+asec[(nItem/2 + 1):nItem] <- aprim[(nItem/2 + 1):nItem]*sqrt((1-term1[2]^2)/term1[2])#
+#
+# put A together so primary and secondary #
+# dimensions are in the right places#
+amat <- cbind(c(aprim[1:(nItem/2)], asec[(nItem/2 + 1):nItem]), c(asec[1:(nItem/2)], aprim[(nItem/2 + 1):nItem]))#
+amat[(nItem/2+1),1] <- amat[1,2] <- 0#
+#
+# draw the difficulty parameter#
+d1 <- rnorm(nItem, 0, 1)#
+if(data == "NC"){#
+    d2 <- rnorm(nItem, 0, 1)#
+}#
+#
+if(data == "C"){#
+    # generate response probabilities#
+    resp <- plogis(cbind(theta, 1)%*% t(cbind(amat, d1)))#
+    # draw random uniform [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+    # Create y=1 if response probability > uniform draw#
+    y1 <- runmat < resp#
+#
+    # draw random uniform [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+    # Create y=T if response probability > uniform draw, F otherwise#
+    y2 <- runmat < resp#
+#
+    # replace logicals with {0,1}#
+    y1 <- apply(y1, 2, as.numeric)#
+    y2 <- apply(y2, 2, as.numeric)#
+#
+}#
+if(data == "NC"){#
+    # generate response probabilities#
+    resp <- plogis(cbind(theta[,1], 1)%*%rbind(amat[,1], d1))*plogis(cbind(theta[,2], 1)%*%rbind(amat[,2], d2))#
+#
+    # draw random uniform on [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+#
+    # Create y=T if response probability > uniform draw, F otherwise#
+    y1 <- runmat < resp#
+#
+    # draw random uniform on [0,1]#
+    runmat <- matrix(runif(length(c(resp)), 0, 1), ncol=ncol(resp))#
+#
+    # Create y=T if response probability > uniform draw, F otherwise#
+    y2 <- runmat < resp#
+#
+    # replace logicals with {0,1}#
+    y2 <- apply(y2, 2, as.numeric)#
+    y1 <- apply(y1, 2, as.numeric)#
+}#
+# estimate compensatory, orthogonal models on y1 and y2#
+mod1 <- mirt(y1, model, itemtype=itype, #
+    verbose=verbose, technical=list(NCYCLES=2500))
+mod2values(mod1)
+mod2 <- mirt(y2, model, itemtype=itype, verbose=verbose)
+mod2
+p <- .7
+x1 <- rbinom(2500, 1, p)
+x2 <- as.numeric(runif(2500, 0, 1) < p)
+var(x1)
+var(x2)
+sd(x1)
+sd(x2)
+table(x1)
+table(x2)
+itype
+?mirt
+library(factorplot)
+library(car)
+data(Ornstein)
+mod <- lm(interlocks ~ sector + nation + assets, data=Ornstein)
+fp <- factorplot(mod, data=Ornstein, factor.var="sector")
+names(fp_)
+names(fp)
+fp$p
+fp$pval
+fp$b.diff
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, c(expression(bold("bold = ")~b[row]-b[col]), #
+	expression(italic("ital = ")~SE(b[row]-b[col]))), xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+fp
+print(fp)
+plot(fp)
+plot(fp, print.pval=TRUE)
+plot2(fp, print.pval=TRUE)
+plot2.factorplot(fp, print.pval=TRUE)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        if(print.se){#
+            second <- r.bsd#
+            if(print.pval){#
+                third <-  r.pval#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            if(print.pval){#
+                second <-  r.pval#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, c(expression(bold("bold = ")~b[row]-b[col]), #
+	expression(italic("ital = ")~SE(b[row]-b[col]))), xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+plot2.factorplot(fp, print.pval=TRUE)
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75)
+?plotmath
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+    }#
+#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value"))#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value))))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+            exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+#
+exps <- NULL#
+if(print.est){#
+       exps <- expression(bold("bold = ")~b[row]-b[col])#
+}#
+#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+    }#
+#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value))))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+            exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+#
+exps <- NULL#
+if(print.est){#
+       exps <- expression(bold("bold = ")~b[row]-b[col])#
+}#
+#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+    }#
+#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+            exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+#
+exps <- NULL#
+if(print.est){#
+       exps <- expression(bold("bold = ")~b[row]-b[col])#
+}#
+#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+#
+exps <- NULL#
+if(print.est){#
+       exps <- expression(bold("bold = ")~b[row]-b[col])#
+}#
+#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75)
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75, print.se=F)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+    }#
+}   #
+#
+library(factorplot)#
+library(car)#
+data(Ornstein)#
+mod <- lm(interlocks ~ sector + nation + assets, data=Ornstein)#
+fp <- factorplot(mod, factor.var = "sector")#
+plot2.factorplot(mod, print.pval=TRUE)
+plot2.factorplot(fp, print.pval=TRUE)
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+	print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+	print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+	colvec <- c("gray80", "white", "gray40")#
+} else{#
+	colvec <- polycol#
+}#
+if(is.null(textcol)){#
+	text.col <- c("black", "black", "white")#
+} else{#
+	text.col <- textcol#
+}#
+if(!is.null(trans)){#
+	r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+ 	squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(plain("Normal = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(plain("Normal = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(plain("Normal = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+	if(!is.null(first)){#
+    text(j+.5, i+.5+(((.05*(length(exps)-1))*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(third)){#
+    text(j+.5, i+.5-(((.05*(length(exps)-1))*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+	if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+	}#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+	cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+    }#
+}   #
+#
+library(factorplot)#
+library(car)#
+data(Ornstein)#
+mod <- lm(interlocks ~ sector + nation + assets, data=Ornstein)#
+fp <- factorplot(mod, factor.var = "sector")#
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75)
+plot2.factorplot(fp, print.pval=TRUE, print.se=FALSE, scale.text=.75)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+    print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+    print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+    colvec <- c("gray80", "white", "gray40")#
+} else{#
+    colvec <- polycol#
+}#
+if(is.null(textcol)){#
+    text.col <- c("black", "black", "white")#
+} else{#
+    text.col <- textcol#
+}#
+if(!is.null(trans)){#
+    r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+    squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+    if(!is.null(first)){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+    if(!is.null(second)){#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+    if(!is.null(third)){#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+    }#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+    cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}#
+} #
+#
+library(factorplot)#
+library(car)#
+data(Ornstein)#
+mod <- lm(interlocks ~ sector + nation + assets, data=Ornstein)#
+fp <- factorplot(mod, factor.var = "sector")#
+plot2.factorplot(fp, print.pval=TRUE, scale.text=.75)
+plot2.factorplot(fp, print.pval=TRUE, print.se=FALSE, scale.text=.75)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+    print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+    print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+    colvec <- c("gray80", "white", "gray40")#
+} else{#
+    colvec <- polycol#
+}#
+if(is.null(textcol)){#
+    text.col <- c("black", "black", "white")#
+} else{#
+    text.col <- textcol#
+}#
+if(!is.null(trans)){#
+    r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+    squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+if(length(exps) == 3){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+}#
+}#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+    cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}#
+}
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+    print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+    print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+    colvec <- c("gray80", "white", "gray40")#
+} else{#
+    colvec <- polycol#
+}#
+if(is.null(textcol)){#
+    text.col <- c("black", "black", "white")#
+} else{#
+    text.col <- textcol#
+}#
+if(!is.null(trans)){#
+    r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+    squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+if(length(exps) == 3){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+}#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+    cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}#
+}
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+    print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+    print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+    colvec <- c("gray80", "white", "gray40")#
+} else{#
+    colvec <- polycol#
+}#
+if(is.null(textcol)){#
+    text.col <- c("black", "black", "white")#
+} else{#
+    text.col <- textcol#
+}#
+if(!is.null(trans)){#
+    r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+    squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+if(length(exps) == 3){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+if(length(exps) == 2){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+if(length(exps) == 1){#
+    text(j+.5, i+.5, sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+}#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+    cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}#
+}
+plot2.factorplot(fp, print.pval=TRUE, print.se=FALSE, scale.text=.75)
+plot2.factorplot <- function(x, ..., abbrev.char=10, polycol=NULL, textcol = NULL, trans=NULL, #
+    print.sig.leg=TRUE, print.square.leg=TRUE, scale.text=1, space.text=1, print.est=TRUE, #
+    print.se=TRUE, print.pval=TRUE){#
+r.bdiff <- x$b.diff[rev(1:nrow(x$b.diff)), ]#
+r.bsd <- x$b.sd[rev(1:nrow(x$b.sd)), ]#
+r.pval <- x$pval[rev(1:nrow(x$pval)), ]#
+use.pval <- x$pval#
+cns.out <- abbreviate(colnames(x$b.diff), abbrev.char)#
+rns.out <- abbreviate(rownames(x$b.diff), abbrev.char)#
+#
+ymarg <- max(strwidth(rns.out, units="inches"))#
+tmarg <- max(strwidth(cns.out, units="inches"))#
+par(mai=c(0,ymarg,tmarg,0), oma=c(0,0,1,0))#
+plot(c(1,nrow(x$b.diff)+1), #
+    c(1, nrow(x$b.diff)+1), type="n", main="", xlab="", ylab="", axes=FALSE)#
+axis(3, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=gsub("_", " ", cns.out, fixed=T), #
+    tick=FALSE, lwd=0, line=-1, las=2)#
+axis(2, at=seq(from=1.5, to=nrow(x$b.diff)+.5, by=1), labels=rev(gsub("_", " ", rns.out, fixed=T)), #
+    tick=FALSE, lwd=0, line=-1, las=1)#
+rseq <- rev(1:nrow(x$b.diff))#
+#
+if(is.null(polycol)){#
+    colvec <- c("gray80", "white", "gray40")#
+} else{#
+    colvec <- polycol#
+}#
+if(is.null(textcol)){#
+    text.col <- c("black", "black", "white")#
+} else{#
+    text.col <- textcol#
+}#
+if(!is.null(trans)){#
+    r.bdiff <- do.call(trans, list(r.bdiff))#
+}#
+m <- 1#
+for(i in rseq){ #
+    for(j in m:nrow(x$b.diff)){#
+#
+        if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] < 0){#
+            col.ind <- 1#
+            }#
+            else if(use.pval[m,j] < ifelse("p" %in% names(x), x$p, .05) & x$b.diff[m,j] > 0){#
+                col.ind <- 3#
+                }#
+                else{#
+                col.ind <- 2#
+                }#
+    squares(c(j, i), col = colvec[col.ind])#
+#
+    exps <- first <- second <- third <- NULL#
+    if(print.est){#
+        first <- r.bdiff#
+        exps <- c(exps, expression(bold("bold = ")~b[row]-b[col]))#
+        if(print.se){#
+            second <- r.bsd#
+            exps <- c(exps, expression(italic("ital = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                third <-  r.pval#
+                exps <- c(exps, "Normal = p-value")#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain(p-value)))#
+            }#
+        }#
+    }#
+    else{#
+        if(print.se){#
+            first <- r.bsd#
+            exps <- c(exps, expression(bold("bold = ")~SE(b[row]-b[col])))#
+            if(print.pval){#
+                second <-  r.pval#
+                exps <- c(exps, expression(italic("ital = ")~plain("p-value")))#
+#
+            }#
+        }#
+        else{#
+            if(print.pval){#
+                first <-  r.pval#
+                exps <- c(exps, expression(bold("bold = ")~plain("p-value")))#
+            }#
+        }#
+    }      #
+#
+if(length(exps) == 3){#
+    text(j+.5, i+.5+((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5, sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5-((.1*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", third[i,j]), font=1, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+if(length(exps) == 2){#
+    text(j+.5, i+.5+((.05*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    text(j+.5, i+.5-((.05*log(nrow(x$b.diff)))*space.text), sprintf("%.2f", second[i,j]), font=3, #
+       cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+if(length(exps) == 1){#
+    text(j+.5, i+.5, sprintf("%.2f", first[i,j]), font=2, #
+        cex=(1-(.0275*(nrow(x$b.diff)-2)))*scale.text, col=text.col[col.ind])#
+    }#
+}#
+m <- m+1#
+}#
+leg <- legend(1,1, c("Significantly < 0", "Not Significant", "Significantly > 0"), fill=colvec, #
+    bty="n", xjust=0, yjust=0, cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.sig.leg)#
+if(!is.null(exps)){#
+legend(1+leg$rect$w*as.numeric(print.sig.leg), 1, exps, xjust=0, yjust=0, bty="n",#
+    cex=ifelse(nrow(x$b.diff) == 2, .75, 1), plot=print.square.leg)#
+}#
+}
+plot2.factorplot(fp, print.pval=TRUE, print.se=FALSE, scale.text=.75)
+install.packages("rjava")
+install.packages("rJAva")
+install.packages("rJava")
+library(rJava)
+install.packages("JGR")
+library(JGR)
+JGR()
+install.packages("rJava")
+install.packages("JGR")
+install.packages("Deducer")
+library(JGR)
+JGR()
+library(JGR)
+JGR()
+help(package=DAMisc)
+france$male <- factor(france$male, levels=c(0,1), labels=c("female", "male"))#
+mod <- glm(voteleft ~ age*male + lrself + retnat, data=france, family=binomial)
+library(rgl)
+help(package=rgl)
+library(rpanel)
+histDraw <- function(panel) {#
+	breaks <- seq.range(panel$x, len=panel$b)#
+	hist(panel$x, breaks=breaks, #
+	main = paste(panel$b," breaks", sep=""))#
+  panel#
+  }#
+panel <- rp.control(x = dat$voice)#
+rp.doublebutton(panel, var = b, step = 1, #
+  title = "Histogram", action = histDraw,#
+  range = c(5, 35), initval=5)
+dat <- na.omit(read.dta(#
+	"http://www.quantoid.net/files/fsu/democracy.dta"))
+library(foreign)
+histDraw <- function(panel) {#
+	breaks <- seq.range(panel$x, len=panel$b)#
+	hist(panel$x, breaks=breaks, #
+	main = paste(panel$b," breaks", sep=""))#
+  panel#
+  }#
+panel <- rp.control(x = dat$voice)#
+rp.doublebutton(panel, var = b, step = 1, #
+  title = "Histogram", action = histDraw,#
+  range = c(5, 35), initval=5)
+dat <- na.omit(read.dta(#
+	"http://www.quantoid.net/files/fsu/democracy.dta"))
+histDraw <- function(panel) {#
+	breaks <- seq.range(panel$x, len=panel$b)#
+	hist(panel$x, breaks=breaks, #
+	main = paste(panel$b," breaks", sep=""))#
+  panel#
+  }#
+panel <- rp.control(x = dat$voice)#
+rp.doublebutton(panel, var = b, step = 1, #
+  title = "Histogram", action = histDraw,#
+  range = c(5, 35), initval=5)
+seq.range <- function(x, lower = "min", upper="max", #
+	args = list(na.rm=TRUE), len=25){#
+	args$x <- x#
+	l <- do.call(lower, args)#
+	u <- do.call(upper, args)#
+	seq(l, u, length=len)#
+}
+histDraw <- function(panel) {#
+	breaks <- seq.range(panel$x, len=panel$b)#
+	hist(panel$x, breaks=breaks, #
+	main = paste(panel$b," breaks", sep=""))#
+  panel#
+  }#
+panel <- rp.control(x = dat$voice)#
+rp.doublebutton(panel, var = b, step = 1, #
+  title = "Histogram", action = histDraw,#
+  range = c(5, 35), initval=5)
+smoother <- function(panel){#
+	lo <- loess(panel$y ~ panel$x, span=panel$s)#
+	plot(panel$x, panel$y, main = paste("RSS = ", #
+		round(sum(lo$residuals^2), 3), "\nEDF = ", #
+		round(lo$trace.hat, 3), sep=""))#
+	lines(sort(lo$x), lo$fitted[order(lo$x)], #
+		type="l", col="red", lwd=2)#
+	panel#
+}#
+#
+panel <- rp.control(x = dat$voice, y=dat$rep1)#
+rp.slider(panel, s, .05, 1, log = F, action = smoother)
+pt <- read.spss(#
+	"http://www.quantoid.net/files/fsu/isq99.por", #
+	to.data.frame=T, #
+	use.value.labels=T)
+u <- url("http://www.quantoid.net/files/fsu/isq99.rda")#
+load(u); close(u)
+u <- url("http://www.quantoid.net/files/fsu/isq99.rda")
+u
+load(u); close(u)
+load("/Users/armstrod/Dropbox/Apps/asocialfolder/quantoid/files/fsu/isq99.rda")
+u <- url("http://www.quantoid.net/files/fsu/isq99.rda")
+load(u)
+library(rMaps)#
+crosslet(#
+  x = "country", #
+  y = c("web_index", "universal_access", "impact_empowerment", "freedom_openness"),#
+  data = web_index#
+)
+library(rMaps)#
+crosslet(#
+  x = "country", #
+  y = c("web_index", "universal_access", "impact_empowerment", "freedom_openness"),#
+  data = web_index#
+)
+library(gridSVG)#
+library(pxR)#
+library(sp)#
+library(lattice)#
+library(latticeExtra)#
+library(maptools)#
+library(classInt)#
+library(colorspace)
+install.packages("gridSVG")
+install.packages("pxR")
+install.packages("classInt")
+library(gridSVG)#
+library(pxR)#
+library(sp)#
+library(lattice)#
+library(latticeExtra)#
+library(maptools)#
+library(classInt)#
+library(colorspace)
+setwd("~/Downloads/")
+load(data.rda)
+load('data.rda')
+ls()
+actors
+popr.ci
+post.diffs
+postdiffs
+setwd("~/Dropbox/FSU/Tuesday")
+list.files()
+file.copy("voicerep.rda", "shiny_smoother/voicerep.rda")
+library(shiny)
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+load("voicerep.rda")
+ls()
+voicerep$voice
+voicerep$rep1
+input <- list(spane=.5)
+input$span
+lo <- loess(voicerep$rep1 ~ voicerep$voice, span=input$span)
+lo
+plot(rep1 ~ voice, data=voicerep, main = paste("RSS = ", #
+        round(sum(lo$residuals^2), 3), "\nEDF = ", #
+        round(lo$trace.hat, 3), sep=""))
+lines(sort(lo$x), lo$fitted[order(lo$x)], #
+        type="l", col="red", lwd=2)
+runApp("shiny_smoother")
+runApp("shiny_smoother")
+lo <- loess(voicerep$rep1 ~ voicerep$voice, span=input$span)#
+    plot(rep1 ~ voice, data=voicerep, main = paste("RSS = ", #
+        round(sum(lo$residuals^2), 3), "\nEDF = ", #
+        round(lo$trace.hat, 3), sep=""))#
+    lines(sort(lo$x), lo$fitted[order(lo$x)], #
+        type="l", col="red", lwd=2)
+setwd("~/Downloads/")
+runApp()
+setwd("~/Dropbox/FSU/Tuesday/shiny_smoother/")
+runApp()
+runApp()
+runApp()
+runApp()
+loess
+?loess
+runApp()
+runApp()
+runApp()
+getwd()
+setwd("../")
+runApp("shiny_hist")
+runApp("shiny_hist")
+runApp("shiny_gam")
+runApp("shiny_gam")
+input <- list(varInput = c(1,2,3))
+require(mgcv) #
+  load("data.rda")
+setwd("shiny_gam")
+require(mgcv) #
+  load("data.rda")
+varnames <- c("cwar", "iwar", "gdppc", "logpop", "civ", "veto")#
+      if(length(varInput) > 0){#
+          form <- as.formula(paste("rep1 ~ 1+ s(voice)", paste(varnames[input$varInput], collapse="+"), sep=""))#
+      }#
+      else{#
+          form <- as.formula("rep1 ~ 1 + s(voice)"#
+      }
+length(input$varInput) > 0
+form <- as.formula(paste("rep1 ~ 1+ s(voice)", paste(varnames[input$varInput], collapse="+"), sep=""))
+form <- as.formula(paste("rep1 ~ 1+ s(voice) + ", paste(varnames[input$varInput], collapse="+"), sep=""))
+form
+mod <- gam(form, data=dat)
+plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, 3) + ", paste(varnames[input$varInput], collapse="+"), sep=""))
+mod <- gam(form, data=dat)#
+      plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=3) + ", paste(varnames[input$varInput], collapse="+"), sep=""))
+mod <- gam(form, data=dat)#
+      plot.gam(mod)
+input$k <- 5
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))
+form
+mod <- gam(form, data=dat)#
+      plot.gam(mod)
+?s
+setwd("shiny_gam")
+runApp()
+runApp()
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))#
+#
+      mod <- gam(form, data=dat)#
+      plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))#
+#
+      mod <- gam(form, data=dat)#
+      plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))#
+#
+      mod <- gam(form, data=dat)#
+      plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))#
+#
+      mod <- gam(form, data=dat)#
+      plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))#
+#
+      mod <- gam(form, data=dat)#
+      plot.gam(mod)
+form <- as.formula(paste("rep1 ~ 1+ s(voice, k=", input$k, ") + ", paste(varnames[input$varInput], collapse="+"), sep=""))#
+#
+      mod <- gam(form, data=dat)#
+      plot.gam(mod)
